@@ -26,14 +26,14 @@ const WORDS = [
 ];
 
 const CHARACTERS = [
-  { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#F97316', bg: '#FFF7ED' },
-  { id: 'wolf', emoji: '🐺', name: 'Cyber Wolf', color: '#6366F1', bg: '#EEF2FF' },
-  { id: 'dragon', emoji: '🐲', name: 'Neon Dragon', color: '#10B981', bg: '#ECFDF5' },
-  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF' },
-  { id: 'lion', emoji: '🦁', name: 'Golden Lion', color: '#FBBF24', bg: '#FFFBEB' },
-  { id: 'panda', emoji: '🐼', name: 'Quantum Panda', color: '#14B8A6', bg: '#F0FDFA' },
-  { id: 'unicorn', emoji: '🦄', name: 'Astro Unicorn', color: '#F472B6', bg: '#FDF2F8' },
-  { id: 'owl', emoji: '🦉', name: 'Night Owl', color: '#60A5FA', bg: '#EFF6FF' }
+  { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#F97316', bg: '#FFF7ED', unlockScore: 0, stats: { speed: 80, tech: 40, focus: 60 } },
+  { id: 'wolf', emoji: '🐺', name: 'Cyber Wolf', color: '#6366F1', bg: '#EEF2FF', unlockScore: 0, stats: { speed: 60, tech: 80, focus: 50 } },
+  { id: 'dragon', emoji: '🐲', name: 'Neon Dragon', color: '#10B981', bg: '#ECFDF5', unlockScore: 300, stats: { speed: 90, tech: 70, focus: 80 } },
+  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF', unlockScore: 600, stats: { speed: 100, tech: 100, focus: 30 } },
+  { id: 'lion', emoji: '🦁', name: 'Golden Lion', color: '#FBBF24', bg: '#FFFBEB', unlockScore: 1000, stats: { speed: 70, tech: 50, focus: 95 } },
+  { id: 'panda', emoji: '🐼', name: 'Quantum Panda', color: '#14B8A6', bg: '#F0FDFA', unlockScore: 1500, stats: { speed: 40, tech: 90, focus: 100 } },
+  { id: 'unicorn', emoji: '🦄', name: 'Astro Unicorn', color: '#F472B6', bg: '#FDF2F8', unlockScore: 2500, stats: { speed: 95, tech: 85, focus: 90 } },
+  { id: 'owl', emoji: '🦉', name: 'Night Owl', color: '#60A5FA', bg: '#EFF6FF', unlockScore: 4000, stats: { speed: 100, tech: 100, focus: 100 } }
 ];
 
 const playSound = (type) => {
@@ -297,10 +297,10 @@ export default function App() {
       />
 
       {gameState === 'menu' && (
-        <div className="glass-panel" style={{ width: '900px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
+        <div className="glass-panel" style={{ width: '1000px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
           <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Dashboard</span></h1>
           <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1rem' }}>
-            Select your avatar and race against time in this luxury dashboard experience.
+            Select your protocol. Unlock advanced entities by achieving higher scores.
           </p>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginBottom: '2rem' }}>
@@ -321,26 +321,54 @@ export default function App() {
                   ))}
                 </div>
               ) : (
-                <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Loading global database...</div>
+                <div style={{ color: 'var(--secondary)', fontFamily: 'monospace', animation: 'blink 1s infinite' }}>&gt; ACCESSING DATABASE_</div>
               )}
             </div>
 
-            <div style={{ flex: '2 1 400px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <h3 style={{ color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px', textAlign: 'left' }}>Select Runner Protocol</h3>
-              <div className="char-selection-grid" style={{ marginBottom: '0' }}>
-                {CHARACTERS.map(char => (
-                  <div 
-                    key={char.id}
-                    className={`char-card ${selectedChar.id === char.id ? 'selected' : ''}`}
-                    style={{ '--hover-color': char.color, '--bg-color': char.bg, padding: '1rem' }}
-                    onClick={() => setSelectedChar(char)}
-                  >
-                    <div className="char-emoji bounce-hover" style={{ fontSize: '2rem' }}>{char.emoji}</div>
-                    <div style={{ fontWeight: 600, color: char.color, fontSize: '0.8rem' }}>{char.name}</div>
+            <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <div className="char-preview-box" style={{ flex: '1 1 200px', borderColor: selectedChar.color, boxShadow: `0 0 30px ${selectedChar.color}33` }}>
+                  <div className="preview-emoji">{selectedChar.emoji}</div>
+                  <h2 style={{ color: selectedChar.color, marginTop: '1rem', fontSize: '1.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>{selectedChar.name}</h2>
+                  
+                  <div style={{ width: '100%', marginTop: '1.5rem' }}>
+                    {Object.entries(selectedChar.stats).map(([stat, val]) => (
+                      <div key={stat} style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          <span>{stat}</span><span style={{ color: selectedChar.color }}>{val}%</span>
+                        </div>
+                        <div className="stat-bar-bg">
+                          <div className="stat-bar-fill" style={{ width: `${val}%`, backgroundColor: selectedChar.color, color: selectedChar.color }}></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column' }}>
+                  <h3 style={{ color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px', textAlign: 'left' }}>Runner Roster</h3>
+                  <div className="char-selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginBottom: 0 }}>
+                    {CHARACTERS.map(char => {
+                      const isLocked = highScore < char.unlockScore;
+                      return (
+                        <div 
+                          key={char.id}
+                          className={`char-card ${selectedChar.id === char.id ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                          style={{ '--hover-color': char.color, '--bg-color': char.bg, padding: '0.8rem' }}
+                          onClick={() => {
+                            if (!isLocked) setSelectedChar(char);
+                          }}
+                        >
+                          <div className="char-emoji" style={{ fontSize: '1.8rem' }}>{isLocked ? '🔒' : char.emoji}</div>
+                          {isLocked && <div style={{ fontSize: '0.7rem', color: 'var(--accent)', marginTop: '4px', fontWeight: 'bold' }}>REQ: {char.unlockScore}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <button className="premium-btn breathe" onClick={startGame} style={{ marginTop: '2rem', padding: '1.5rem', fontSize: '1.5rem', width: '100%' }}>
+
+              <button className="premium-btn breathe" onClick={startGame} style={{ padding: '1.5rem', fontSize: '1.5rem', width: '100%', letterSpacing: '4px' }}>
                 INITIALIZE RUN ⚡
               </button>
             </div>
