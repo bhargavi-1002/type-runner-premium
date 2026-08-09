@@ -116,7 +116,7 @@ export default function App() {
   const fetchGlobalHighScores = async () => {
     if (!db) return;
     try {
-      const q = query(collection(db, "highscores"), orderBy("score", "desc"), limit(5));
+      const q = query(collection(db, "highscores"), orderBy("score", "desc"), limit(3));
       const querySnapshot = await getDocs(q);
       const scores = [];
       querySnapshot.forEach((doc) => scores.push(doc.data()));
@@ -314,9 +314,11 @@ export default function App() {
               {globalHighScores.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {globalHighScores.map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                      <span style={{ color: i === 0 ? '#ffd700' : 'var(--text-main)' }}>{i + 1}. {s.character}</span>
-                      <span style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{s.score} pts</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}>
+                      <span style={{ color: i === 0 ? 'var(--primary)' : 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                        {i + 1}. {s.character}
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>{s.score} PTS</span>
                     </div>
                   ))}
                 </div>
@@ -390,9 +392,12 @@ export default function App() {
               </div>
             </div>
             
-            <div className="timer-display">
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: timeLeft <= 5 ? 'var(--accent)' : 'var(--text-main)', animation: timeLeft <= 5 ? 'pulse 0.5s infinite' : 'none' }}>
-                00:{timeLeft.toString().padStart(2, '0')}
+            <div className="timer-ring-container">
+              <svg className="timer-ring-svg" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="36" className="timer-ring-circle" style={{ strokeDashoffset: 226 - (226 * (timeLeft / 30)), stroke: timeLeft <= 5 ? 'var(--accent)' : 'var(--primary)' }} />
+              </svg>
+              <div style={{ position: 'absolute', fontSize: '1.5rem', fontWeight: 900, color: timeLeft <= 5 ? 'var(--accent)' : 'var(--text-main)', animation: timeLeft <= 5 ? 'pulse 0.5s infinite' : 'none' }}>
+                {timeLeft}
               </div>
             </div>
           </div>
@@ -420,11 +425,11 @@ export default function App() {
           <div className="stats-container">
             <div className="stat-box">
               <div className="stat-label">Score</div>
-              <div className="stat-value text-gradient">{score}</div>
+              <div key={score} className="stat-value punch-anim">{score}</div>
             </div>
             <div className="stat-box">
               <div className="stat-label">Combo</div>
-              <div className="stat-value" style={{ color: combo >= 5 ? selectedChar.color : 'inherit', textShadow: combo >= 5 ? `0 0 10px ${selectedChar.color}` : 'none' }}>
+              <div key={combo} className="stat-value punch-anim" style={{ color: combo >= 5 ? selectedChar.color : 'inherit', textShadow: combo >= 5 ? `0 0 15px ${selectedChar.color}` : 'none' }}>
                 {combo}x
               </div>
             </div>
@@ -442,7 +447,11 @@ export default function App() {
           <h2>RUN COMPLETE</h2>
           
           <div className="score-huge text-gradient-accent">{score}</div>
-          {score >= highScore && score > 0 && <div className="new-highscore">NEW HIGH SCORE!</div>}
+          {score >= highScore && score > 0 && (
+            <div className="new-highscore" style={{ fontFamily: 'JetBrains Mono, monospace', borderStyle: 'dashed' }}>
+              &gt; SYSTEM ALERT: NEW PERSONAL BEST RECORDED_
+            </div>
+          )}
           
           <div className="stats-container" style={{ marginBottom: '2rem', justifyContent: 'center' }}>
             <div className="stat-box">
