@@ -26,15 +26,15 @@ const WORDS = [
 ];
 
 const CHARACTERS = [
-  { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#F97316', bg: '#FFF7ED', unlockScore: 0, stats: { speed: 80, tech: 40, focus: 60 } },
-  { id: 'wolf', emoji: '🐺', name: 'Cyber Wolf', color: '#6366F1', bg: '#EEF2FF', unlockScore: 0, stats: { speed: 60, tech: 80, focus: 50 } },
-  { id: 'dragon', emoji: '🐲', name: 'Neon Dragon', color: '#10B981', bg: '#ECFDF5', unlockScore: 300, stats: { speed: 90, tech: 70, focus: 80 } },
-  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF', unlockScore: 600, stats: { speed: 100, tech: 100, focus: 30 } },
-  { id: 'lion', emoji: '🦁', name: 'Golden Lion', color: '#FBBF24', bg: '#FFFBEB', unlockScore: 1000, stats: { speed: 70, tech: 50, focus: 95 } },
-  { id: 'panda', emoji: '🐼', name: 'Quantum Panda', color: '#14B8A6', bg: '#F0FDFA', unlockScore: 1500, stats: { speed: 40, tech: 90, focus: 100 } },
-  { id: 'unicorn', emoji: '🦄', name: 'Astro Unicorn', color: '#F472B6', bg: '#FDF2F8', unlockScore: 2500, stats: { speed: 95, tech: 85, focus: 90 } },
-  { id: 'owl', emoji: '🦉', name: 'Night Owl', color: '#60A5FA', bg: '#EFF6FF', unlockScore: 4000, stats: { speed: 100, tech: 100, focus: 100 } },
-  { id: 'robot', emoji: '🤖', name: 'Cyber Runner', color: '#00FFFF', bg: '#002222', unlockScore: 5000, stats: { speed: 100, tech: 100, focus: 100 } }
+  { id: 'fox', emoji: '🦊', name: 'Level 1', color: '#F97316', bg: '#FFF7ED', unlockScore: 0, startLevel: 1 },
+  { id: 'wolf', emoji: '🐺', name: 'Level 2', color: '#6366F1', bg: '#EEF2FF', unlockScore: 50, startLevel: 2 },
+  { id: 'dragon', emoji: '🐲', name: 'Level 3', color: '#10B981', bg: '#ECFDF5', unlockScore: 100, startLevel: 3 },
+  { id: 'alien', emoji: '👽', name: 'Level 4', color: '#8B5CF6', bg: '#F5F3FF', unlockScore: 150, startLevel: 4 },
+  { id: 'lion', emoji: '🦁', name: 'Level 5', color: '#FBBF24', bg: '#FFFBEB', unlockScore: 200, startLevel: 5 },
+  { id: 'panda', emoji: '🐼', name: 'Level 6', color: '#14B8A6', bg: '#F0FDFA', unlockScore: 250, startLevel: 6 },
+  { id: 'unicorn', emoji: '🦄', name: 'Level 7', color: '#F472B6', bg: '#FDF2F8', unlockScore: 300, startLevel: 7 },
+  { id: 'owl', emoji: '🦉', name: 'Level 8', color: '#60A5FA', bg: '#EFF6FF', unlockScore: 400, startLevel: 8 },
+  { id: 'robot', emoji: '🤖', name: 'Level 9', color: '#00FFFF', bg: '#002222', unlockScore: 500, startLevel: 9 }
 ];
 
 const playSound = (type) => {
@@ -141,14 +141,15 @@ export default function App() {
     }
   };
 
-  const startGame = () => {
+  const startGame = (charObj = selectedChar) => {
     setScore(0);
     setCombo(0);
-    setWordsCleared(0);
+    const startLvl = charObj.startLevel || 1;
+    setWordsCleared((startLvl - 1) * 5);
     setTimeLeft(30);
     setComment('');
     setUsedWords([]);
-    pickNewWord([], 1);
+    pickNewWord([], startLvl);
     setGameState('playing');
     
     setTimeout(() => focusInput(), 100);
@@ -303,6 +304,7 @@ export default function App() {
 
       {gameState === 'menu' && (
         <div className="glass-panel" style={{ width: '800px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
+          <h1 style={{ color: 'var(--accent)', textShadow: '0 0 15px var(--accent-glow)', letterSpacing: '4px', marginBottom: '2rem', textTransform: 'uppercase' }}>TYPE RUNNER</h1>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '1rem', alignItems: 'center' }}>
             <div className="char-selection-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '600px' }}>
               {CHARACTERS.map(char => {
@@ -315,7 +317,7 @@ export default function App() {
                     onClick={() => {
                       if (!isLocked) {
                         setSelectedChar(char);
-                        startGame();
+                        startGame(char);
                       }
                     }}
                   >
@@ -421,7 +423,7 @@ export default function App() {
             <button className="premium-btn" onClick={resetToMenu} style={{ background: 'var(--panel-border)' }}>
               Return to Base
             </button>
-            <button className="premium-btn" onClick={startGame}>
+            <button className="premium-btn" onClick={() => startGame(selectedChar)}>
               Run Again ⚡
             </button>
           </div>
