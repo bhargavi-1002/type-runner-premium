@@ -25,7 +25,17 @@ const WORDS = [
   'MICROSERVICES', 'VIRTUALIZATION', 'SCALABILITY', 'ACCESSIBILITY'
 ];
 
-const CYBER_AVATAR = { emoji: '🤖', name: 'Cyber Runner', stats: { speed: 100, tech: 100, focus: 100 } };
+const CHARACTERS = [
+  { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#F97316', bg: '#FFF7ED', unlockScore: 0, stats: { speed: 80, tech: 40, focus: 60 } },
+  { id: 'wolf', emoji: '🐺', name: 'Cyber Wolf', color: '#6366F1', bg: '#EEF2FF', unlockScore: 0, stats: { speed: 60, tech: 80, focus: 50 } },
+  { id: 'dragon', emoji: '🐲', name: 'Neon Dragon', color: '#10B981', bg: '#ECFDF5', unlockScore: 300, stats: { speed: 90, tech: 70, focus: 80 } },
+  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF', unlockScore: 600, stats: { speed: 100, tech: 100, focus: 30 } },
+  { id: 'lion', emoji: '🦁', name: 'Golden Lion', color: '#FBBF24', bg: '#FFFBEB', unlockScore: 1000, stats: { speed: 70, tech: 50, focus: 95 } },
+  { id: 'panda', emoji: '🐼', name: 'Quantum Panda', color: '#14B8A6', bg: '#F0FDFA', unlockScore: 1500, stats: { speed: 40, tech: 90, focus: 100 } },
+  { id: 'unicorn', emoji: '🦄', name: 'Astro Unicorn', color: '#F472B6', bg: '#FDF2F8', unlockScore: 2500, stats: { speed: 95, tech: 85, focus: 90 } },
+  { id: 'owl', emoji: '🦉', name: 'Night Owl', color: '#60A5FA', bg: '#EFF6FF', unlockScore: 4000, stats: { speed: 100, tech: 100, focus: 100 } },
+  { id: 'robot', emoji: '🤖', name: 'Cyber Runner', color: '#00FFFF', bg: '#002222', unlockScore: 5000, stats: { speed: 100, tech: 100, focus: 100 } }
+];
 
 const playSound = (type) => {
   try {
@@ -76,6 +86,7 @@ const playSound = (type) => {
 
 export default function App() {
   const [gameState, setGameState] = useState('menu'); 
+  const [selectedChar, setSelectedChar] = useState(CHARACTERS[0]);
   const [currentWord, setCurrentWord] = useState('');
   const [typedChars, setTypedChars] = useState('');
   const [wrongChar, setWrongChar] = useState(false);
@@ -100,16 +111,31 @@ export default function App() {
   useEffect(() => {
     const saved = localStorage.getItem('typeRunnerHighScore');
     if (saved) setHighScore(parseInt(saved, 10));
+    fetchGlobalHighScores();
   }, []);
+
+  const fetchGlobalHighScores = async () => {
+    if (!db) return;
+    try {
+      const q = query(collection(db, "highscores"), orderBy("score", "desc"), limit(3));
+      const querySnapshot = await getDocs(q);
+      const scores = [];
+      querySnapshot.forEach((doc) => scores.push(doc.data()));
+      setGlobalHighScores(scores);
+    } catch (error) {
+      console.error("Error fetching scores:", error);
+    }
+  };
 
   const saveScoreToGlobal = async (finalScore) => {
     if (!db || finalScore === 0) return;
     try {
       await addDoc(collection(db, "highscores"), {
         score: finalScore,
-        character: CYBER_AVATAR.name,
+        character: selectedChar.name,
         timestamp: new Date()
       });
+      fetchGlobalHighScores();
     } catch (error) {
       console.error("Error saving score:", error);
     }
@@ -276,28 +302,54 @@ export default function App() {
       />
 
       {gameState === 'menu' && (
-        <div className="glass-panel" style={{ width: '400px', maxWidth: '95vw', textAlign: 'center', padding: '3rem' }}>
-          <h1 style={{ color: 'var(--accent)', textShadow: '0 0 20px var(--accent-glow)' }}>SYSTEM READY_</h1>
-          <button className="premium-btn breathe" onClick={startGame} style={{ marginTop: '2rem', padding: '1.5rem', fontSize: '1.5rem', width: '100%', letterSpacing: '4px', background: 'var(--accent)', color: '#000' }}>
-            INITIALIZE RUN ⚡
-          </button>
+        <div className="glass-panel" style={{ width: '800px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
+          <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Protocol</span></h1>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1rem' }}>
+            Select your avatar. Your Highest Score: <strong style={{ color: 'var(--accent)' }}>{highScore}</strong>
+          </p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '1rem', alignItems: 'center' }}>
+            <div className="char-selection-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '600px' }}>
+              {CHARACTERS.map(char => {
+                const isLocked = highScore < char.unlockScore;
+                return (
+                  <div 
+                    key={char.id}
+                    className={`char-card ${selectedChar.id === char.id ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                    style={{ '--hover-color': char.color, '--bg-color': char.bg, padding: '1rem' }}
+                    onClick={() => {
+                      if (!isLocked) setSelectedChar(char);
+                    }}
+                  >
+                    <div className="char-emoji" style={{ fontSize: '2.5rem' }}>{isLocked ? '🔒' : char.emoji}</div>
+                    <div style={{ marginTop: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem', color: isLocked ? 'var(--text-muted)' : char.color }}>{char.name}</div>
+                    {isLocked && <div style={{ fontSize: '0.75rem', color: 'var(--accent)', marginTop: '4px', fontWeight: 'bold' }}>REQ: {char.unlockScore}</div>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <button className="premium-btn breathe" onClick={startGame} style={{ padding: '1.5rem', fontSize: '1.5rem', width: '100%', maxWidth: '600px', letterSpacing: '4px' }}>
+              INITIALIZE RUN ⚡
+            </button>
+          </div>
         </div>
       )}
 
       {gameState === 'playing' && (
-        <div className="glass-panel playing-panel" style={{ borderColor: 'var(--accent)' }}>
+        <div className="glass-panel playing-panel" style={{ borderColor: selectedChar.color }}>
           
           <div className="hud-top">
             <div className="hud-avatar">
               <div className="avatar-ring-container">
                 <svg className="combo-ring-svg" viewBox="0 0 70 70">
-                  <circle cx="35" cy="35" r="30" className="combo-ring-circle" style={{ strokeDashoffset: 188 - (188 * ((combo % 5) / 5)), stroke: 'var(--accent)' }} />
+                  <circle cx="35" cy="35" r="30" className="combo-ring-circle" style={{ strokeDashoffset: 188 - (188 * ((combo % 5) / 5)), stroke: (combo > 0 && combo % 5 === 0) ? 'var(--primary)' : 'var(--accent)' }} />
                 </svg>
-                <span className={`char-emoji ${mascotAnim}`} style={{ fontSize: '2.5rem' }}>{CYBER_AVATAR.emoji}</span>
+                <span className={`char-emoji ${mascotAnim}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
               </div>
               <div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>LEVEL {currentLevel}</div>
-                <div style={{ color: 'var(--accent)', fontWeight: 900, fontSize: '1.2rem' }}>
+                <div style={{ color: selectedChar.color, fontWeight: 900, fontSize: '1.2rem' }}>
                   {currentLevel >= 5 ? 'GRANDMASTER' : currentLevel === 4 ? 'EXPERT' : currentLevel === 3 ? 'PRO' : currentLevel === 2 ? 'INTERMEDIATE' : 'NOVICE'}
                 </div>
               </div>
@@ -340,7 +392,7 @@ export default function App() {
             </div>
             <div className="stat-box">
               <div className="stat-label">Combo</div>
-              <div key={combo} className="stat-value punch-anim" style={{ color: combo >= 5 ? 'var(--accent)' : 'inherit', textShadow: combo >= 5 ? `0 0 15px var(--accent)` : 'none' }}>
+              <div key={combo} className="stat-value punch-anim" style={{ color: combo >= 5 ? selectedChar.color : 'inherit', textShadow: combo >= 5 ? `0 0 15px ${selectedChar.color}` : 'none' }}>
                 {combo}x
               </div>
             </div>
@@ -354,10 +406,10 @@ export default function App() {
 
       {gameState === 'gameover' && (
         <div className="glass-panel game-over-panel" style={{ width: '600px', maxWidth: '95vw' }}>
-          <div className="char-emoji idle-anim" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{CYBER_AVATAR.emoji}</div>
+          <div className="char-emoji idle-anim" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{selectedChar.emoji}</div>
           <h2>RUN COMPLETE</h2>
           
-          <div className="score-huge" style={{ color: 'var(--accent)', textShadow: '0 0 20px var(--accent-glow)', fontSize: '5rem', fontWeight: 900 }}>{score}</div>
+          <div className="score-huge text-gradient-accent">{score}</div>
           {score >= highScore && score > 0 && (
             <div className="new-highscore" style={{ fontFamily: 'JetBrains Mono, monospace', borderStyle: 'dashed' }}>
               &gt; SYSTEM ALERT: NEW PERSONAL BEST RECORDED_
