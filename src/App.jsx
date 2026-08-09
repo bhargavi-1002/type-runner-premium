@@ -297,39 +297,54 @@ export default function App() {
       />
 
       {gameState === 'menu' && (
-        <div className="glass-panel" style={{ width: '800px', maxWidth: '95vw', textAlign: 'center' }}>
+        <div className="glass-panel" style={{ width: '900px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
           <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Dashboard</span></h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '1rem' }}>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1rem' }}>
             Select your avatar and race against time in this luxury dashboard experience.
           </p>
           
-          <div className="char-selection-grid">
-            {CHARACTERS.map(char => (
-              <div 
-                key={char.id}
-                className={`char-card ${selectedChar.id === char.id ? 'selected' : ''}`}
-                style={{ '--hover-color': char.color, '--bg-color': char.bg }}
-                onClick={() => setSelectedChar(char)}
-              >
-                <div className="char-emoji bounce-hover">{char.emoji}</div>
-                <div style={{ fontWeight: 600, color: char.color }}>{char.name}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginBottom: '2rem' }}>
+            <div style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.4)', borderRadius: '16px', padding: '1.5rem', textAlign: 'left', border: '1px solid var(--panel-border)' }}>
+              <h3 style={{ color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px' }}>Your Personal Best</h3>
+              <div style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--accent)', textShadow: '0 0 15px rgba(255, 0, 127, 0.4)', marginBottom: '1.5rem' }}>
+                {highScore} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>PTS</span>
               </div>
-            ))}
-          </div>
-          
-          <button className="premium-btn breathe" onClick={startGame}>Initialize Run ⚡</button>
-          
-          {globalHighScores.length > 0 && (
-            <div className="leaderboard-box">
-              <h3 style={{ color: 'var(--secondary)', marginBottom: '1rem' }}>Global Leaderboard</h3>
-              {globalHighScores.map((s, i) => (
-                <div key={i} className="leaderboard-row">
-                  <span>{i + 1}. {s.character}</span>
-                  <span style={{ fontWeight: 'bold' }}>{s.score} pts</span>
+              
+              <h3 style={{ color: 'var(--secondary)', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px' }}>Global Top Runners</h3>
+              {globalHighScores.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {globalHighScores.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                      <span style={{ color: i === 0 ? '#ffd700' : 'var(--text-main)' }}>{i + 1}. {s.character}</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{s.score} pts</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Loading global database...</div>
+              )}
             </div>
-          )}
+
+            <div style={{ flex: '2 1 400px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <h3 style={{ color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px', textAlign: 'left' }}>Select Runner Protocol</h3>
+              <div className="char-selection-grid" style={{ marginBottom: '0' }}>
+                {CHARACTERS.map(char => (
+                  <div 
+                    key={char.id}
+                    className={`char-card ${selectedChar.id === char.id ? 'selected' : ''}`}
+                    style={{ '--hover-color': char.color, '--bg-color': char.bg, padding: '1rem' }}
+                    onClick={() => setSelectedChar(char)}
+                  >
+                    <div className="char-emoji bounce-hover" style={{ fontSize: '2rem' }}>{char.emoji}</div>
+                    <div style={{ fontWeight: 600, color: char.color, fontSize: '0.8rem' }}>{char.name}</div>
+                  </div>
+                ))}
+              </div>
+              <button className="premium-btn breathe" onClick={startGame} style={{ marginTop: '2rem', padding: '1.5rem', fontSize: '1.5rem', width: '100%' }}>
+                INITIALIZE RUN ⚡
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
