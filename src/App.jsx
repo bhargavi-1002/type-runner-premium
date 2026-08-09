@@ -3,16 +3,26 @@ import './index.css';
 import { db, collection, addDoc, getDocs, query, orderBy, limit } from './firebase';
 
 const WORDS = [
-  // Easy
-  'REACT', 'CODE', 'WEB', 'DATA', 'NODE', 'HTML', 'CSS', 'API', 'BUG', 'TEST',
-  'APP', 'DEV', 'TECH', 'USER', 'FILE', 'LINK', 'TEXT', 'VIEW',
-  // Medium
-  'JAVASCRIPT', 'TYPESCRIPT', 'FRONTEND', 'BACKEND', 'DATABASE',
-  'COMPONENT', 'INTERFACE', 'PROMISE', 'VARIABLE', 'FUNCTION',
-  'NETWORK', 'BROWSER', 'STORAGE', 'SERVER', 'CLIENT', 'OBJECT',
-  // Hard
-  'ALGORITHM', 'DEPLOYMENT', 'PERFORMANCE', 'ASYNCHRONOUS', 'MIDDLEWARE',
-  'ARCHITECTURE', 'OPTIMIZATION', 'AUTHENTICATION', 'DEPENDENCY', 'FRAMEWORK'
+  // Level 1: Very Easy (3-4 letters)
+  'CAT', 'DOG', 'RUN', 'FUN', 'SUN', 'WEB', 'API', 'BUG', 'DEV', 'APP', 'NET', 'BOT',
+  'CODE', 'DATA', 'NODE', 'HTML', 'USER', 'FILE', 'LINK', 'TEXT', 'VIEW', 'PLAY', 'GAME',
+  
+  // Level 2: Easy (5-6 letters)
+  'REACT', 'STATE', 'PROPS', 'HOOKS', 'BUILD', 'DEBUG', 'LOGIC', 'FETCH', 'ASYNC', 'AWAIT',
+  'SERVER', 'CLIENT', 'OBJECT', 'STRING', 'NUMBER', 'BOOLEAN', 'ARRAY', 'DESIGN', 'SYSTEM',
+  
+  // Level 3: Medium (7-8 letters)
+  'FRONTEND', 'BACKEND', 'DATABASE', 'FUNCTION', 'VARIABLE', 'CONSTANT', 'PROMISE',
+  'NETWORK', 'BROWSER', 'STORAGE', 'COMPILER', 'TERMINAL', 'CONSOLE', 'ELEMENT',
+  
+  // Level 4: Hard (9-10 letters)
+  'JAVASCRIPT', 'TYPESCRIPT', 'COMPONENT', 'INTERFACE', 'FRAMEWORK', 'MIDDLEWARE',
+  'DEPLOYMENT', 'REPOSITORY', 'PAGINATION', 'NAVIGATION', 'VALIDATION', 'ENCRYPTION',
+  
+  // Level 5: Extreme (11+ letters)
+  'PERFORMANCE', 'ASYNCHRONOUS', 'ARCHITECTURE', 'OPTIMIZATION', 'AUTHENTICATION',
+  'AUTHORIZATION', 'DEPENDENCY', 'ENVIRONMENT', 'POLYMORPHISM', 'ENCAPSULATION',
+  'MICROSERVICES', 'VIRTUALIZATION', 'SCALABILITY', 'ACCESSIBILITY'
 ];
 
 const CHARACTERS = [
@@ -169,12 +179,13 @@ export default function App() {
 
   const pickNewWord = (currentUsed = usedWords, level = currentLevel) => {
     // Filter words based on difficulty/level to make it progressively harder
-    // Level 1: length <= 5, Level 2: length <= 8, Level 3+: any
     let availableWords = WORDS.filter(w => !currentUsed.includes(w));
     
-    if (level === 1) availableWords = availableWords.filter(w => w.length <= 5);
-    else if (level === 2) availableWords = availableWords.filter(w => w.length > 5 && w.length <= 8);
-    else availableWords = availableWords.filter(w => w.length > 8);
+    if (level === 1) availableWords = availableWords.filter(w => w.length <= 4);
+    else if (level === 2) availableWords = availableWords.filter(w => w.length === 5 || w.length === 6);
+    else if (level === 3) availableWords = availableWords.filter(w => w.length === 7 || w.length === 8);
+    else if (level === 4) availableWords = availableWords.filter(w => w.length === 9 || w.length === 10);
+    else availableWords = availableWords.filter(w => w.length >= 11);
 
     // Fallback if we run out of words for a specific difficulty
     if (availableWords.length === 0) {
@@ -232,7 +243,9 @@ export default function App() {
         setCombo(newCombo);
         
         // Time bonus depending on level (harder levels give less bonus)
-        const timeBonus = Math.max(1, 3 - Math.floor(newCleared / 10));
+        // Level 1: +3s, Level 2: +2s, Level 3: +1s, Level 4+: 0s
+        const currentLevelObj = Math.floor(newCleared / 5) + 1;
+        const timeBonus = Math.max(0, 4 - currentLevelObj);
         setTimeLeft(prev => prev + timeBonus);
         
         if (newCombo % 5 === 0) {
@@ -285,9 +298,9 @@ export default function App() {
 
       {gameState === 'menu' && (
         <div className="glass-panel" style={{ width: '800px', maxWidth: '95vw', textAlign: 'center' }}>
-          <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Premium</span></h1>
+          <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Dashboard</span></h1>
           <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '1rem' }}>
-            Select your avatar and race against time in this luxury typing experience.
+            Select your avatar and race against time in this luxury dashboard experience.
           </p>
           
           <div className="char-selection-grid">
@@ -327,9 +340,9 @@ export default function App() {
             <div className="hud-avatar">
               <span className={`char-emoji bounce-continuous ${isFlipping ? 'flip-anim' : ''}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
               <div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>LVL {currentLevel} • {selectedChar.name}</div>
-                <div style={{ color: selectedChar.color, fontWeight: 700 }}>
-                  {currentLevel >= 5 ? 'MASTER' : currentLevel >= 3 ? 'PRO' : 'NOVICE'}
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>LEVEL {currentLevel}</div>
+                <div style={{ color: selectedChar.color, fontWeight: 900, fontSize: '1.2rem' }}>
+                  {currentLevel >= 5 ? 'GRANDMASTER' : currentLevel === 4 ? 'EXPERT' : currentLevel === 3 ? 'PRO' : currentLevel === 2 ? 'INTERMEDIATE' : 'NOVICE'}
                 </div>
               </div>
             </div>
