@@ -563,18 +563,18 @@ h1 {
 }
 
 .letter.typed {
-  color: var(--secondary);
-  text-shadow: 0 0 10px var(--secondary-glow);
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 
 .letter.current {
   color: #fff;
-  border-bottom: 3px solid var(--secondary);
+  border-bottom: 3px solid var(--accent);
   animation: blink 1s infinite;
 }
 
 @keyframes blink {
-  0%, 100% { border-color: var(--secondary); }
+  0%, 100% { border-color: var(--accent); }
   50% { border-color: transparent; }
 }
 
