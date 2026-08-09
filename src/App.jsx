@@ -3,16 +3,27 @@ import './index.css';
 import { db, collection, addDoc, getDocs, query, orderBy, limit } from './firebase';
 
 const WORDS = [
-  'REACT', 'JAVASCRIPT', 'TYPESCRIPT', 'FRONTEND', 'BACKEND', 'DATABASE',
-  'ALGORITHM', 'COMPONENT', 'INTERFACE', 'PROMISE', 'ASYNC', 'AWAIT',
-  'DEPLOYMENT', 'VERCEL', 'FIREBASE', 'VARIABLE', 'FUNCTION', 'PERFORMANCE'
+  // Easy
+  'REACT', 'CODE', 'WEB', 'DATA', 'NODE', 'HTML', 'CSS', 'API', 'BUG', 'TEST',
+  'APP', 'DEV', 'TECH', 'USER', 'FILE', 'LINK', 'TEXT', 'VIEW',
+  // Medium
+  'JAVASCRIPT', 'TYPESCRIPT', 'FRONTEND', 'BACKEND', 'DATABASE',
+  'COMPONENT', 'INTERFACE', 'PROMISE', 'VARIABLE', 'FUNCTION',
+  'NETWORK', 'BROWSER', 'STORAGE', 'SERVER', 'CLIENT', 'OBJECT',
+  // Hard
+  'ALGORITHM', 'DEPLOYMENT', 'PERFORMANCE', 'ASYNCHRONOUS', 'MIDDLEWARE',
+  'ARCHITECTURE', 'OPTIMIZATION', 'AUTHENTICATION', 'DEPENDENCY', 'FRAMEWORK'
 ];
 
 const CHARACTERS = [
   { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#F97316', bg: '#FFF7ED' },
   { id: 'wolf', emoji: '🐺', name: 'Cyber Wolf', color: '#6366F1', bg: '#EEF2FF' },
   { id: 'dragon', emoji: '🐲', name: 'Neon Dragon', color: '#10B981', bg: '#ECFDF5' },
-  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF' }
+  { id: 'alien', emoji: '👽', name: 'Zeta Reticulan', color: '#8B5CF6', bg: '#F5F3FF' },
+  { id: 'lion', emoji: '🦁', name: 'Golden Lion', color: '#FBBF24', bg: '#FFFBEB' },
+  { id: 'panda', emoji: '🐼', name: 'Quantum Panda', color: '#14B8A6', bg: '#F0FDFA' },
+  { id: 'unicorn', emoji: '🦄', name: 'Astro Unicorn', color: '#F472B6', bg: '#FDF2F8' },
+  { id: 'owl', emoji: '🦉', name: 'Night Owl', color: '#60A5FA', bg: '#EFF6FF' }
 ];
 
 const playSound = (type) => {
@@ -79,6 +90,9 @@ export default function App() {
   const [comment, setComment] = useState('');
   const [scorePopups, setScorePopups] = useState([]);
   const [isFlipping, setIsFlipping] = useState(false);
+  const [usedWords, setUsedWords] = useState([]);
+  
+  const currentLevel = Math.floor(wordsCleared / 5) + 1;
   
   const timerRef = useRef(null);
   const inputRef = useRef(null);
@@ -122,7 +136,8 @@ export default function App() {
     setWordsCleared(0);
     setTimeLeft(30);
     setComment('');
-    pickNewWord();
+    setUsedWords([]);
+    pickNewWord([], 1);
     setGameState('playing');
     
     setTimeout(() => focusInput(), 100);
@@ -152,10 +167,37 @@ export default function App() {
     });
   };
 
-  const pickNewWord = () => {
-    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+  const pickNewWord = (currentUsed = usedWords, level = currentLevel) => {
+    // Filter words based on difficulty/level to make it progressively harder
+    // Level 1: length <= 5, Level 2: length <= 8, Level 3+: any
+    let availableWords = WORDS.filter(w => !currentUsed.includes(w));
+    
+    if (level === 1) availableWords = availableWords.filter(w => w.length <= 5);
+    else if (level === 2) availableWords = availableWords.filter(w => w.length > 5 && w.length <= 8);
+    else availableWords = availableWords.filter(w => w.length > 8);
+
+    // Fallback if we run out of words for a specific difficulty
+    if (availableWords.length === 0) {
+      availableWords = WORDS.filter(w => !currentUsed.includes(w));
+    }
+    
+    // If absolutely all words are used, reset used words
+    if (availableWords.length === 0) {
+      availableWords = WORDS;
+      setUsedWords([]);
+    }
+
+    const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
     setCurrentWord(randomWord);
     setTypedChars('');
+    
+    // Track the word as used
+    if (availableWords !== WORDS) {
+      setUsedWords(prev => [...prev, randomWord]);
+    } else {
+      setUsedWords([randomWord]); // Reset occurred
+    }
+    
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -184,13 +226,18 @@ export default function App() {
       setScore(newScore);
       
       if (newTyped.length === currentWord.length) {
-        setWordsCleared(prev => prev + 1);
+        const newCleared = wordsCleared + 1;
+        setWordsCleared(newCleared);
         const newCombo = combo + 1;
         setCombo(newCombo);
         
+        // Time bonus depending on level (harder levels give less bonus)
+        const timeBonus = Math.max(1, 3 - Math.floor(newCleared / 10));
+        setTimeLeft(prev => prev + timeBonus);
+        
         if (newCombo % 5 === 0) {
           playSound('combo');
-          const msgs = ["🔥 ON FIRE!", "⚡ AMAZING!", "🚀 UNSTOPPABLE!", "✨ PERFECT!"];
+          const msgs = ["🔥 ON FIRE!", "⚡ AMAZING!", "🚀 LEVEL UP!", "✨ PERFECT!"];
           setComment(msgs[Math.floor(Math.random() * msgs.length)]);
           setIsFlipping(true);
           setTimeout(() => { setComment(''); setIsFlipping(false); }, 1500);
@@ -203,7 +250,7 @@ export default function App() {
         setScorePopups(prev => [...prev, { id: popId, text: `+${10 + combo*5}` }]);
         setTimeout(() => setScorePopups(prev => prev.filter(p => p.id !== popId)), 800);
 
-        setTimeout(() => pickNewWord(), 150);
+        setTimeout(() => pickNewWord(usedWords, Math.floor(newCleared / 5) + 1), 150);
       }
     } else {
       playSound('wrong');
@@ -280,8 +327,10 @@ export default function App() {
             <div className="hud-avatar">
               <span className={`char-emoji bounce-continuous ${isFlipping ? 'flip-anim' : ''}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
               <div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>RUNNING AS</div>
-                <div style={{ color: selectedChar.color, fontWeight: 700 }}>{selectedChar.name}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>LVL {currentLevel} • {selectedChar.name}</div>
+                <div style={{ color: selectedChar.color, fontWeight: 700 }}>
+                  {currentLevel >= 5 ? 'MASTER' : currentLevel >= 3 ? 'PRO' : 'NOVICE'}
+                </div>
               </div>
             </div>
             
