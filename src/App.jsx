@@ -99,7 +99,7 @@ export default function App() {
   const [globalHighScores, setGlobalHighScores] = useState([]);
   const [comment, setComment] = useState('');
   const [scorePopups, setScorePopups] = useState([]);
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [mascotAnim, setMascotAnim] = useState('idle-anim');
   const [usedWords, setUsedWords] = useState([]);
   
   const currentLevel = Math.floor(wordsCleared / 5) + 1;
@@ -252,10 +252,12 @@ export default function App() {
           playSound('combo');
           const msgs = ["🔥 ON FIRE!", "⚡ AMAZING!", "🚀 LEVEL UP!", "✨ PERFECT!"];
           setComment(msgs[Math.floor(Math.random() * msgs.length)]);
-          setIsFlipping(true);
-          setTimeout(() => { setComment(''); setIsFlipping(false); }, 1500);
+          setMascotAnim('flip-anim spark-anim');
+          setTimeout(() => { setComment(''); setMascotAnim('idle-anim'); }, 1500);
         } else {
           playSound('complete');
+          setMascotAnim('lunge-anim');
+          setTimeout(() => { setMascotAnim('idle-anim'); }, 300);
         }
         
         // Add floaty popup
@@ -270,8 +272,10 @@ export default function App() {
       setWrongChar(true);
       setCombo(0);
       setComment("Oops!");
+      setMascotAnim('stumble-anim');
       setTimeout(() => setComment(''), 1000);
       setTimeout(() => setWrongChar(false), 300);
+      setTimeout(() => setMascotAnim('idle-anim'), 400);
     }
   };
 
@@ -280,7 +284,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-container" onClick={focusInput}>
+    <div className="app-container" onClick={focusInput} style={{ '--grid-speed': `${Math.max(2, 20 - combo)}s`, '--env-speed': `${Math.max(1, 10 - combo / 2)}s` }}>
       <div className="space-bg"></div>
       <div className="animated-grid"></div>
       
@@ -383,7 +387,12 @@ export default function App() {
           
           <div className="hud-top">
             <div className="hud-avatar">
-              <span className={`char-emoji bounce-continuous ${isFlipping ? 'flip-anim' : ''}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
+              <div className="avatar-ring-container">
+                <svg className="combo-ring-svg" viewBox="0 0 70 70">
+                  <circle cx="35" cy="35" r="30" className="combo-ring-circle" style={{ strokeDashoffset: 188 - (188 * ((combo % 5) / 5)), stroke: (combo > 0 && combo % 5 === 0) ? 'var(--primary)' : 'var(--accent)' }} />
+                </svg>
+                <span className={`char-emoji ${mascotAnim}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
+              </div>
               <div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>LEVEL {currentLevel}</div>
                 <div style={{ color: selectedChar.color, fontWeight: 900, fontSize: '1.2rem' }}>
@@ -443,7 +452,7 @@ export default function App() {
 
       {gameState === 'gameover' && (
         <div className="glass-panel game-over-panel" style={{ width: '600px', maxWidth: '95vw' }}>
-          <div className="char-emoji bounce-continuous" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{selectedChar.emoji}</div>
+          <div className="char-emoji idle-anim" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{selectedChar.emoji}</div>
           <h2>RUN COMPLETE</h2>
           
           <div className="score-huge text-gradient-accent">{score}</div>
