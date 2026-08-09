@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './index.css';
+import { db, collection, addDoc, getDocs, query, orderBy, limit } from './firebase';
 
 const CHARACTERS = [
   { id: 'fox', emoji: '🦊', name: 'Firefox', color: '#ff8c00', bg: 'rgba(255, 140, 0, 0.2)' },
@@ -12,7 +13,7 @@ const WORDS = [
   'javascript', 'react', 'glassmorphism', 'premium', 'velocity',
   'cyberpunk', 'neon', 'gradient', 'developer', 'aesthetic',
   'interface', 'experience', 'animation', 'particles', 'backend',
-  'frontend', 'database', 'deployment', 'vercel', 'supabase'
+  'frontend', 'database', 'deployment', 'vercel', 'supabase', 'firebase'
 ];
 
 export default function App() {
@@ -25,6 +26,8 @@ export default function App() {
   
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
+  const [globalHighScores, setGlobalHighScores] = useState([]);
+  
   const [combo, setCombo] = useState(0);
   const [wordsCleared, setWordsCleared] = useState(0);
   
@@ -34,7 +37,39 @@ export default function App() {
   useEffect(() => {
     const savedScore = localStorage.getItem('typeRunnerHighScore');
     if (savedScore) setHighScore(parseInt(savedScore, 10));
+    
+    // Fetch global high scores if Firebase is configured
+    fetchGlobalHighScores();
   }, []);
+
+  const fetchGlobalHighScores = async () => {
+    if (!db) return;
+    try {
+      const q = query(collection(db, "highscores"), orderBy("score", "desc"), limit(5));
+      const querySnapshot = await getDocs(q);
+      const scores = [];
+      querySnapshot.forEach((doc) => {
+        scores.push({ id: doc.id, ...doc.data() });
+      });
+      setGlobalHighScores(scores);
+    } catch (error) {
+      console.error("Error fetching high scores:", error);
+    }
+  };
+
+  const saveScoreToGlobal = async (finalScore) => {
+    if (!db || finalScore === 0) return;
+    try {
+      await addDoc(collection(db, "highscores"), {
+        score: finalScore,
+        character: selectedChar.name,
+        timestamp: new Date()
+      });
+      fetchGlobalHighScores(); // Refresh scores after saving
+    } catch (error) {
+      console.error("Error saving score:", error);
+    }
+  };
 
   const startGame = () => {
     setScore(0);
@@ -48,7 +83,7 @@ export default function App() {
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          endGame();
+          endGame(0); // prev is 1, so time will be 0
           return 0;
         }
         return prev - 1;
@@ -56,13 +91,19 @@ export default function App() {
     }, 1000);
   };
 
+  // We need to pass score via functional state to ensure we get the latest
   const endGame = () => {
     clearInterval(timerRef.current);
     setGameState('gameover');
-    if (score > highScore) {
-      setHighScore(score);
-      localStorage.setItem('typeRunnerHighScore', score);
-    }
+    
+    setScore(finalScore => {
+      if (finalScore > highScore) {
+        setHighScore(finalScore);
+        localStorage.setItem('typeRunnerHighScore', finalScore);
+      }
+      saveScoreToGlobal(finalScore);
+      return finalScore;
+    });
   };
 
   const pickNewWord = () => {
@@ -90,7 +131,6 @@ export default function App() {
           // Word complete!
           setWordsCleared(prev => prev + 1);
           setCombo(prev => prev + 1);
-          // Spawn particle effect here ideally (omitted for brevity, handled via css transition)
           setTimeout(() => pickNewWord(), 150);
         }
       } else {
@@ -136,6 +176,18 @@ export default function App() {
           </div>
           
           <button className="premium-btn breathe" onClick={startGame}>Initialize Run ⚡</button>
+          
+          {globalHighScores.length > 0 && (
+            <div style={{ marginTop: '2rem', textAlign: 'left', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px' }}>
+              <h3 style={{ color: 'var(--secondary)', marginBottom: '1rem' }}>Global Leaderboard</h3>
+              {globalHighScores.map((s, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '0.5rem 0' }}>
+                  <span>{i + 1}. {s.character}</span>
+                  <span style={{ fontWeight: 'bold' }}>{s.score} pts</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
