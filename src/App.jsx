@@ -20,32 +20,44 @@ const playSound = (type) => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
+
     if (type === 'complete') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.start(); osc.stop(ctx.currentTime + 0.1);
-    } else if (type === 'combo') {
-      osc.type = 'square';
       osc.frequency.setValueAtTime(800, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.start(); osc.stop(ctx.currentTime + 0.1);
-    } else if (type === 'wrong') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
       osc.start(); osc.stop(ctx.currentTime + 0.2);
+    } else if (type === 'combo') {
+      // Arpeggio chord for combo!
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => { // C5, E5, G5, C6
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        const time = ctx.currentTime + (i * 0.05);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.setValueAtTime(0.3, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+        osc.start(time); osc.stop(time + 0.2);
+      });
+    } else if (type === 'wrong') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      osc.start(); osc.stop(ctx.currentTime + 0.3);
     }
   } catch(e) {}
 };
@@ -65,6 +77,8 @@ export default function App() {
   
   const [globalHighScores, setGlobalHighScores] = useState([]);
   const [comment, setComment] = useState('');
+  const [scorePopups, setScorePopups] = useState([]);
+  const [isFlipping, setIsFlipping] = useState(false);
   
   const timerRef = useRef(null);
   const inputRef = useRef(null);
@@ -178,11 +192,17 @@ export default function App() {
           playSound('combo');
           const msgs = ["🔥 ON FIRE!", "⚡ AMAZING!", "🚀 UNSTOPPABLE!", "✨ PERFECT!"];
           setComment(msgs[Math.floor(Math.random() * msgs.length)]);
-          setTimeout(() => setComment(''), 1500);
+          setIsFlipping(true);
+          setTimeout(() => { setComment(''); setIsFlipping(false); }, 1500);
         } else {
           playSound('complete');
         }
         
+        // Add floaty popup
+        const popId = Date.now();
+        setScorePopups(prev => [...prev, { id: popId, text: `+${10 + combo*5}` }]);
+        setTimeout(() => setScorePopups(prev => prev.filter(p => p.id !== popId)), 800);
+
         setTimeout(() => pickNewWord(), 150);
       }
     } else {
@@ -258,7 +278,7 @@ export default function App() {
           
           <div className="hud-top">
             <div className="hud-avatar">
-              <span className="char-emoji bounce-continuous" style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
+              <span className={`char-emoji bounce-continuous ${isFlipping ? 'flip-anim' : ''}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
               <div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>RUNNING AS</div>
                 <div style={{ color: selectedChar.color, fontWeight: 700 }}>{selectedChar.name}</div>
@@ -274,6 +294,9 @@ export default function App() {
           
           <div className="play-area">
             {comment && <div className="encouraging-comment">{comment}</div>}
+            {scorePopups.map(p => (
+              <div key={p.id} className="score-popup">{p.text}</div>
+            ))}
             
             <div className="word-display">
               {currentWord.split('').map((char, index) => {
