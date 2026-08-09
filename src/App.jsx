@@ -303,11 +303,6 @@ export default function App() {
 
       {gameState === 'menu' && (
         <div className="glass-panel" style={{ width: '800px', maxWidth: '95vw', textAlign: 'center', padding: '2rem' }}>
-          <h1><span className="text-gradient">Type Runner</span> <span className="text-gradient-accent">Protocol</span></h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1rem' }}>
-            Select your avatar. Your Highest Score: <strong style={{ color: 'var(--accent)' }}>{highScore}</strong>
-          </p>
-          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '1rem', alignItems: 'center' }}>
             <div className="char-selection-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '600px' }}>
               {CHARACTERS.map(char => {
@@ -316,40 +311,39 @@ export default function App() {
                   <div 
                     key={char.id}
                     className={`char-card ${selectedChar.id === char.id ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
-                    style={{ '--hover-color': char.color, '--bg-color': char.bg, padding: '1rem' }}
+                    style={{ '--hover-color': 'var(--accent)', '--bg-color': char.bg, padding: '1rem' }}
                     onClick={() => {
-                      if (!isLocked) setSelectedChar(char);
+                      if (!isLocked) {
+                        setSelectedChar(char);
+                        startGame();
+                      }
                     }}
                   >
                     <div className="char-emoji" style={{ fontSize: '2.5rem' }}>{isLocked ? '🔒' : char.emoji}</div>
-                    <div style={{ marginTop: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem', color: isLocked ? 'var(--text-muted)' : char.color }}>{char.name}</div>
+                    <div style={{ marginTop: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem', color: isLocked ? 'var(--text-muted)' : 'var(--accent)' }}>{char.name}</div>
                     {isLocked && <div style={{ fontSize: '0.75rem', color: 'var(--accent)', marginTop: '4px', fontWeight: 'bold' }}>REQ: {char.unlockScore}</div>}
                   </div>
                 );
               })}
             </div>
-
-            <button className="premium-btn breathe" onClick={startGame} style={{ padding: '1.5rem', fontSize: '1.5rem', width: '100%', maxWidth: '600px', letterSpacing: '4px' }}>
-              INITIALIZE RUN ⚡
-            </button>
           </div>
         </div>
       )}
 
       {gameState === 'playing' && (
-        <div className="glass-panel playing-panel" style={{ borderColor: selectedChar.color }}>
+        <div className="glass-panel playing-panel" style={{ borderColor: 'var(--accent)' }}>
           
           <div className="hud-top">
             <div className="hud-avatar">
               <div className="avatar-ring-container">
                 <svg className="combo-ring-svg" viewBox="0 0 70 70">
-                  <circle cx="35" cy="35" r="30" className="combo-ring-circle" style={{ strokeDashoffset: 188 - (188 * ((combo % 5) / 5)), stroke: (combo > 0 && combo % 5 === 0) ? 'var(--primary)' : 'var(--accent)' }} />
+                  <circle cx="35" cy="35" r="30" className="combo-ring-circle" style={{ strokeDashoffset: 188 - (188 * ((combo % 5) / 5)), stroke: (combo > 0 && combo % 5 === 0) ? '#fff' : 'var(--accent)' }} />
                 </svg>
                 <span className={`char-emoji ${mascotAnim}`} style={{ fontSize: '2.5rem' }}>{selectedChar.emoji}</span>
               </div>
               <div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>LEVEL {currentLevel}</div>
-                <div style={{ color: selectedChar.color, fontWeight: 900, fontSize: '1.2rem' }}>
+                <div style={{ color: 'var(--accent)', fontWeight: 900, fontSize: '1.2rem' }}>
                   {currentLevel >= 5 ? 'GRANDMASTER' : currentLevel === 4 ? 'EXPERT' : currentLevel === 3 ? 'PRO' : currentLevel === 2 ? 'INTERMEDIATE' : 'NOVICE'}
                 </div>
               </div>
@@ -392,7 +386,7 @@ export default function App() {
             </div>
             <div className="stat-box">
               <div className="stat-label">Combo</div>
-              <div key={combo} className="stat-value punch-anim" style={{ color: combo >= 5 ? selectedChar.color : 'inherit', textShadow: combo >= 5 ? `0 0 15px ${selectedChar.color}` : 'none' }}>
+              <div key={combo} className="stat-value punch-anim" style={{ color: combo >= 5 ? 'var(--accent)' : 'inherit', textShadow: combo >= 5 ? `0 0 15px var(--accent)` : 'none' }}>
                 {combo}x
               </div>
             </div>
@@ -409,7 +403,7 @@ export default function App() {
           <div className="char-emoji idle-anim" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{selectedChar.emoji}</div>
           <h2>RUN COMPLETE</h2>
           
-          <div className="score-huge text-gradient-accent">{score}</div>
+          <div className="score-huge" style={{ color: 'var(--accent)', textShadow: '0 0 20px var(--accent-glow)', fontSize: '5rem', fontWeight: 900, WebkitTextFillColor: 'var(--accent)' }}>{score}</div>
           {score >= highScore && score > 0 && (
             <div className="new-highscore" style={{ fontFamily: 'JetBrains Mono, monospace', borderStyle: 'dashed' }}>
               &gt; SYSTEM ALERT: NEW PERSONAL BEST RECORDED_
